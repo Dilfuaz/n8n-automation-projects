@@ -1,0 +1,764 @@
+{
+  "name": "AI Medical Triage & Smart Booking System",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "e947139a-58cf-4e21-aab9-e2bc66ba8c68",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        160,
+        -336
+      ],
+      "webhookId": "06b3e628-6481-45d5-97bf-2531abdd7963",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Nama Pengirim: {{ $json.user_name }}\nKeluhan Pasien: {{ $json.message_text }}\n\nAnda adalah Asisten Triase Medis Profesional di klinik fisioterapi.\n\nTUGAS ANDA: Menganalisis keluhan pasien dan mengklasifikasikan urgensi.\n\nATURAN KERAS:\n1. JANGAN PERNAH memberikan diagnosa medis pasti.\n2. JANGAN meresepkan obat.\n3. Hanya lakukan screening awal berdasarkan gejala yang disebutkan.\n4. Jika input BUKAN keluhan medis (misal: sapaan, tanya harga, test bot), set kategori_triase menjadi \"NON_MEDIS\" dan berikan rekomendasi untuk menghubungi admin.\n5. WAJIB output dalam format JSON murni, tanpa teks pembuka/penutup.\n\nOUTPUT FORMAT (WAJIB JSON):\n{\n  \"nama\": \"Nama Pasien\",\n  \"gejala_utama\": \"Ringkasan gejala dalam 1 kalimat\",\n  \"skala_nyeri\": \"Angka 1-10 atau null jika tidak disebutkan\",\n  \"kategori_triase\": \"RINGAN | SEDANG | DARURAT | NON_MEDIS\",\n  \"alasan_triase\": \"Penjelasan singkat kenapa masuk kategori tersebut\",\n  \"rekomendasi_awal\": \"Saran tindakan pertama\"\n}\n\nKRITERIA KATEGORI:\n- DARURAT: Cedera akut, pendarahan aktif, tidak bisa bergerak sama sekali, nyeri > 8/10, trauma benturan keras.\n- SEDANG: Nyeri fungsional, bengkak tapi masih bisa gerak terbatas, nyeri 4-7/10.\n- RINGAN: Pegal linu, kekakuan otot, nyeri < 4/10, keluhan kronis.\n- NON_MEDIS: Sapaan, pertanyaan umum, spam, atau input tidak relevan dengan triase medis.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Anda adalah Asisten Triase Medis Profesional di klinik fisioterapi.  TUGAS ANDA: Menganalisis keluhan pasien dan mengklasifikasikan urgensi.  ATURAN KERAS: 1. JANGAN PERNAH memberikan diagnosa medis pasti. 2. JANGAN meresepkan obat. 3. Hanya lakukan screening awal berdasarkan gejala yang disebutkan. 4. WAJIB output dalam format JSON murni, tanpa teks pembuka/penutup.  OUTPUT FORMAT (WAJIB JSON): {   \"nama\": \"Nama Pasien\",   \"gejala_utama\": \"Ringkasan gejala dalam 1 kalimat\",   \"skala_nyeri\": \"Angka 1-10\",   \"kategori_triase\": \"RINGAN | SEDANG | DARURAT\",   \"alasan_triase\": \"Penjelasan singkat kenapa masuk kategori tersebut\",   \"rekomendasi_awal\": \"Saran tindakan pertama\" }  KRITERIA KATEGORI: - DARURAT: Cedera akut, pendarahan aktif, tidak bisa bergerak sama sekali, nyeri > 8/10, trauma benturan keras. - SEDANG: Nyeri fungsional, bengkak tapi masih bisa gerak terbatas, nyeri 4-7/10. - RINGAN: Pegal linu, kekakuan otot, nyeri < 4/10, keluhan kronis.\n\n\nCONTOH ANALISIS (WAJIB IKUTI POLA INI):\n\nInput: \"Dok, saya jatuh dari motor, lutut bengkak parah nyeri 9/10\"\nOutput JSON: {\n  \"nama\": \"Budel\",\n  \"gejala_utama\": \"Jatuh dari motor, lutut bengkak parah\",\n  \"skala_nyeri\": \"9\",\n  \"kategori_triase\": \"DARURAT\",\n  \"alasan_triase\": \"Trauma benturan keras dengan skala nyeri > 8/10\",\n  \"rekomendasi_awal\": \"Segera ke IGD untuk evaluasi trauma dan rontgen\"\n}\n\nInput: \"Punggung sakit sejak kemarin, nyeri 3/10 habis angkat beban\"\nOutput JSON: {\n  \"nama\": \"Budel\",\n  \"gejala_utama\": \"Nyeri punggung pasca angkat beban\",\n  \"skala_nyeri\": \"3\",\n  \"kategori_triase\": \"RINGAN\",\n  \"alasan_triase\": \"Nyeri fungsional < 4/10 tanpa trauma akut\",\n  \"rekomendasi_awal\": \"Istirahat, kompres hangat, dan observasi 24 jam\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "dcda4c84-9d60-4e59-8627-c05db535d476",
+      "name": "AI Triage Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        608,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "a8cb9585-de85-49e9-9a5e-dd3fee893db8",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        -208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ambil output text dari AI\nconst aiOutput = $input.first().json.text;\n\n// Parse string JSON menjadi object JavaScript\ntry {\n  const parsedData = JSON.parse(aiOutput);\n  \n  // Kembalikan data yang sudah rapi\n  return {\n    json: parsedData\n  };\n} catch (error) {\n  // Kalau AI ngawur dan bukan JSON, kembalikan error\n  return {\n    json: {\n      error: \"Gagal parse JSON dari AI\",\n      raw: aiOutput\n    }\n  };\n}"
+      },
+      "id": "4997e762-f363-4158-802f-61b6f2b63771",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "eb6d27d0-594b-4c75-b8bb-202479534ada",
+              "name": "saved_chat_id",
+              "value": "={{ $('Normalize Input Data').item.json.chat_id }}",
+              "type": "string"
+            },
+            {
+              "id": "51ed57cf-1f49-448e-936d-caa1a0627fa4",
+              "name": "saved_name",
+              "value": "={{ $('Normalize Input Data').item.json.user_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1184,
+        -432
+      ],
+      "id": "47f098a0-c38a-4deb-b483-c7e108d0f153",
+      "name": "Save Patient Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "25a2c89c-36cb-42d8-8daa-b4193a72603c",
+              "leftValue": "={{ ($json.kategori_triase || \"\").toString().trim().toUpperCase() }}",
+              "rightValue": "DARURAT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "324478e6-74ef-422b-ade8-23a265ef2967",
+      "name": "Check Urgency",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1408,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d8350d3-0410-4021-bf3c-e496e6214da6",
+              "name": "pesan_alert",
+              "value": "=⚠️ DARURAT MEDIS!  Pasien: {{ $json.nama }} Keluhan: {{ $json.gejala_utama }} Skala Nyeri: {{ $json.skala_nyeri }}/10 Tindakan: {{ $json.rekomendasi_awal }}  Segera hubungi pasien atau siapkan IGD!",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b898e759-2295-4c7b-80de-ade2a7227d11",
+      "name": "Set Doctor Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1632,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Set Doctor Alert\"].json.saved_chat_id }}",
+        "text": "=Halo {{ $node[\"Set Doctor Alert\"].json.saved_name }}! \n\nBerdasarkan keluhan Anda, sistem mengklasifikasikan sebagai: *DARURAT MEDIS*\n\n📋 Gejala: {{ $node[\"Set Doctor Alert\"].json.gejala_utama }}\n💡 Rekomendasi: {{ $node[\"Set Doctor Alert\"].json.rekomendasi_awal }}\n\nTim medis kami telah di-alert & akan segera menghubungi Anda. Mohon tetap tenang.\n\n⚠️ DISCLAIMER: Respon ini adalah screening awal berbasis AI, BUKAN diagnosa medis resmi. Selalu konsultasikan dengan dokter profesional untuk penanganan yang tepat.\n\n🏥 MediTriage Assistant",
+        "additionalFields": {}
+      },
+      "id": "2b57a976-b521-4e85-b67b-552a05a37c5d",
+      "name": "Send Emergency Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        -624
+      ],
+      "webhookId": "53f738dd-6084-40fb-87be-152e7458b305",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1gB2oc53qca4ktB-CmuLgJdxbg1VvENPZWg3akMnn8kI",
+          "mode": "list",
+          "cachedResultName": "MediTriage_Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gB2oc53qca4ktB-CmuLgJdxbg1VvENPZWg3akMnn8kI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gB2oc53qca4ktB-CmuLgJdxbg1VvENPZWg3akMnn8kI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Nama": "={{ $node[\"Save Patient Data\"].json.saved_name }}",
+            "Chat ID": "={{ $node[\"Save Patient Data\"].json.saved_chat_id }}",
+            "Keluhan": "={{ $node[\"Telegram Trigger\"].json.message.text }}",
+            "Kategori Triase": "={{ $node[\"Check Urgency\"].json.kategori_triase }}",
+            "Rekomendasi": "={{ $node[\"Parse AI Response\"].json.rekomendasi_awal }}",
+            "Status": "DARURAT_COMPLETED"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nama",
+              "displayName": "Nama",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Chat ID",
+              "displayName": "Chat ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Keluhan",
+              "displayName": "Keluhan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Kategori Triase",
+              "displayName": "Kategori Triase",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rekomendasi",
+              "displayName": "Rekomendasi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e48f2a07-fcd2-4b58-9136-e62412d4b33d",
+      "name": "Log Emergency to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2304,
+        -624
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lnw2FQwtaDzNg2G2",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Cek Non-Medis\"].json.saved_chat_id }}",
+        "text": "=Halo {{ $node[\"Cek Non-Medis\"].json.saved_name || 'Pasien' }}! \n\nBerdasarkan keluhan Anda, sistem mengklasifikasikan sebagai: *{{ $node[\"Cek Non-Medis\"].json.kategori_triase || 'RUTIN' }}*\n\n📋 Gejala: {{ $node[\"Parse AI Response\"].json.gejala_utama || '-' }}\n💡 Saran Awal: {{ $node[\"Parse AI Response\"].json.rekomendasi_awal || '-' }}\n\nKami akan carikan jadwal konsultasi terdekat untuk Anda. Silakan tunggu konfirmasi selanjutnya.\n\nTerima kasih telah menggunakan MediTriage! \n\n⚠️ DISCLAIMER: Respon ini adalah screening awal berbasis AI, BUKAN diagnosa medis resmi. Selalu konsultasikan dengan dokter profesional untuk penanganan yang tepat.\n\n🏥 MediTriage Assistant",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        -432
+      ],
+      "id": "025a864d-9b48-43cd-8196-b72db1df06f3",
+      "name": "Send Routine Reply",
+      "webhookId": "e18d42d7-2713-4056-b75c-1e6ccd3e5d45",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6260a102-1a09-42fb-b7b7-9cd59f380651",
+              "name": "pesan_konfirmasi",
+              "value": "=Halo {{ $json.nama }}, keluhan Anda termasuk kategori {{ $json.kategori_triase }}. Silakan pilih jadwal konsultasi berikut:",
+              "type": "string"
+            },
+            {
+              "id": "0b4e63c4-4050-4711-bc17-a7e787b4a03f",
+              "name": "status_booking",
+              "value": "MENUNGGU_JADWAL",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dbaada43-96bc-4b29-b60f-5988ef635a87",
+      "name": "Process Booking",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2304,
+        -432
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "5f9c32b0-b84c-4f26-a919-b891dd0c7b18",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "5072846573",
+        "text": "=🚨 ALERT ERROR WORKFLOW TRIASE!\n\nWorkflow 'AI Medical Triage' mengalami kegagalan teknis.\n\n🔴 Node Error: {{ $json.execution?.lastNodeExecuted || 'Unknown' }}\n️⚠️ Pesan: {{ $json.execution?.error?.message || 'No error message' }}\n🕓 Waktu: {{ $now }}\n\nSegera cek dashboard n8n untuk detail lengkap!",
+        "additionalFields": {}
+      },
+      "id": "4c75d671-e0c4-4955-bf68-440dfd356435",
+      "name": "Notify Admin Error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        -16
+      ],
+      "webhookId": "16e6e237-b497-4163-8554-23a612608d28",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "099105ea-8a5c-4e25-8b60-39a035d4cae7",
+              "leftValue": "={{ $json.kategori_triase }}",
+              "rightValue": "NON_MEDIS",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1632,
+        -336
+      ],
+      "id": "462f3dc4-0f3a-4e1b-90e4-95f2297246d6",
+      "name": "Cek Non-Medis"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Cek Non-Medis\"].json.saved_chat_id }}",
+        "text": "=Halo {{ $node[\"Cek Non-Medis\"].json.saved_name || 'Pasien' }}! 👋\n\nSepertinya pertanyaan Anda di luar layanan triase medis otomatis kami.\n\nUntuk informasi harga, jadwal konsultasi, atau pertanyaan umum lainnya, silakan hubungi admin kami secara langsung ya. Kami siap membantu! 😊\n\n🏥 MediTriage Assistant",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2080,
+        -240
+      ],
+      "id": "c57a62c4-709c-4bbc-b374-d4355faff7c3",
+      "name": "Balas Non-Medis",
+      "webhookId": "dcefc811-cf47-448c-8a17-6fb93e94fc11",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fb242515-8e4f-4624-9dca-e07e6846644c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        -528
+      ],
+      "id": "c283dc3f-53df-4a3f-bacd-4e3d92096265",
+      "name": "WAHA Webhook",
+      "webhookId": "fb242515-8e4f-4624-9dca-e07e6846644c"
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $json.saved_chat_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1856,
+        -624
+      ],
+      "id": "6be3ea76-03d1-42c9-8342-3000151329e9",
+      "name": "Show Typing Indicator",
+      "webhookId": "36be3bf2-081e-4cc9-8662-2f6267857ff1",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $node[\"Save Patient Data\"].json.saved_chat_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1856,
+        -240
+      ],
+      "id": "f0b3fe7e-69fc-4bbb-a72f-209e85311c1d",
+      "name": "Show Typing Indicator1",
+      "webhookId": "40e37a45-06a6-4dd8-a697-4d4c0f3f92ae",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction",
+        "chatId": "={{ $json.saved_chat_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1856,
+        -432
+      ],
+      "id": "c6f44667-f77e-4567-86c4-aa8c05506f96",
+      "name": "Show Typing Indicator2",
+      "webhookId": "4ce88028-6b3c-4d42-8147-aa182fb3f6fd",
+      "credentials": {
+        "telegramApi": {
+          "id": "Quh7lJL4vFdzjUhf",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deteksi apakah data berasal dari Telegram atau WAHA\nconst isTelegram = $input.item.json.message !== undefined;\n\nlet standardizedData = {};\n\nif (isTelegram) {\n  // === FORMAT TELEGRAM ===\n  standardizedData = {\n    platform: 'telegram',\n    chat_id: String($input.item.json.message.chat.id),\n    user_name: $input.item.json.message.from?.first_name || 'Pasien',\n    message_text: $input.item.json.message.text || '',\n    raw_data: $input.item.json \n  };\n} else {\n  // === FORMAT WAHA (WHATSAPP) ===\n  const wahaData = $input.item.json;\n  \n  standardizedData = {\n    platform: 'whatsapp',\n    // Hapus suffix '@c.us' kalau ada, ambil angka murni\n    chat_id: String(wahaData.chatId || wahaData.sender || '').replace('@c.us', ''),\n    user_name: wahaData.senderName || wahaData.pushName || 'Pasien',\n    message_text: wahaData.body || wahaData.text || wahaData.message || '',\n    raw_data: wahaData\n  };\n}\n\nreturn { json: standardizedData };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -432
+      ],
+      "id": "f43a22eb-7193-4234-a288-ff19265878c7",
+      "name": "Normalize Input Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Triage Chain": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Triage Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Save Patient Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Patient Data": {
+      "main": [
+        [
+          {
+            "node": "Check Urgency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Urgency": {
+      "main": [
+        [
+          {
+            "node": "Set Doctor Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cek Non-Medis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Doctor Alert": {
+      "main": [
+        [
+          {
+            "node": "Show Typing Indicator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Emergency Reply": {
+      "main": [
+        [
+          {
+            "node": "Log Emergency to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Routine Reply": {
+      "main": [
+        [
+          {
+            "node": "Process Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Notify Admin Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek Non-Medis": {
+      "main": [
+        [
+          {
+            "node": "Show Typing Indicator1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Show Typing Indicator2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Balas Non-Medis": {
+      "main": [
+        []
+      ]
+    },
+    "Show Typing Indicator": {
+      "main": [
+        [
+          {
+            "node": "Send Emergency Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Show Typing Indicator1": {
+      "main": [
+        [
+          {
+            "node": "Balas Non-Medis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Show Typing Indicator2": {
+      "main": [
+        [
+          {
+            "node": "Send Routine Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WAHA Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input Data": {
+      "main": [
+        [
+          {
+            "node": "AI Triage Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ee7f2034-b2f3-4891-ba37-fb1190eaecac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cad3502214943a6f79193ff7f6ac42f84f8aadfc4183d3fdfa24d95f92147277"
+  },
+  "nodeGroups": [],
+  "id": "SXRMhKHg7BunzIrG",
+  "tags": []
+}
